@@ -1,0 +1,195 @@
+对于文件的复制，平时我们都是使用输入输出流进行操作，利用源文件创建出一个输入流，然后利用目标文件创建出一个输出流，最后将输入流的数据读取写入到输出流中。这样也是可以进行操作的。但是利用fileChannel是很有用的一个方式。它能直接连接输入输出流的文件通道，将数据直接写入到目标文件中去。而且效率更高。
+
+FileChannel类
+
+FileChannel是一个用读写，映射和操作一个文件的通道。出了读写操作之外，还有裁剪特定大小文件truncate()，强制在内存中的数据刷新到硬盘中去force()，对通道上锁lock()等功能。
+
+他们的使用分别如下面代码：
+
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+            //读取1024字节内容到byteBuffer钟
+            fileChannelInput.read(byteBuffer);
+1
+2
+3
+4
+解释：上面代码首先创建一个1024大小的缓冲对象，然后在输入通道中读取1024大小数据，放入到缓冲对象中。
+
+            byteBuffer.clear();
+            byteBuffer.put("需要写入的数据对于文件的复制，平时我们都是使用输入输出流进行操作，利用源文件创建出一个输入流，然后利用目标文件创建出一个输出流，最后将输入流的数据读取写入到输出流中。这样也是可以进行操作的。但是利用fileChannel是很有用的一个方式。它能直接连接输入输出流的文件通道，将数据直接写入到目标文件中去。而且效率更高。
+
+FileChannel类
+
+FileChannel是一个用读写，映射和操作一个文件的通道。出了读写操作之外，还有裁剪特定大小文件truncate()，强制在内存中的数据刷新到硬盘中去force()，对通道上锁lock()等功能。
+
+他们的使用分别如下面代码：
+
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+            //读取1024字节内容到byteBuffer钟
+            fileChannelInput.read(byteBuffer);
+1
+2
+3
+4
+解释：上面代码首先创建一个1024大小的缓冲对象，然后在输入通道中读取1024大小数据，放入到缓冲对象中。
+
+            byteBuffer.clear();
+            byteBuffer.put("需要写入的数据�接强制数据写入内存中。
+
+使用
+
+说那么多可能没用，我们还是直接来看看分别使用两种方法进行文件复制的对比。
+
+首先是普通的输入输出流进行复制文件：
+
+    /**
+     * 普通的文件复制方法
+     *
+     * @param fromFile 源文件
+     * @param toFile   目标文件
+     * @throws FileNotFoundException 未找到文件异常
+     */
+    public void fileCopyNormal(File fromFile, File toFile) throws FileNotFoundException {
+        InputStream inputStream = null;
+        OutputStream outputStream = null;
+        try {
+            inputStream = new BufferedInputStream(new FileInputStream(fromFile));
+            outputStream = new BufferedOutputStream(new FileOutputStream(toFile));
+            byte[] bytes = new byte[1024];
+            int i;
+            //读取到输入流数据，然后写入到输出流中去，实现复制
+            while ((i = inputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, i);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null)
+                    inputStream.close();
+                if (outputStream != null)
+                    outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+在上面的代码中，传入源文件和目标文件两个参数，然后根据两个文件，分别出具输入输出流，然后将输入流的数据读取，并且写入输出流中，就完成了文件的复制操作。
+
+下面再看一下利用fileChannel进行文件的复制操作。
+
+    /**
+     * 用filechannel进行文件复制
+     *
+     * @param fromFile 源文件
+     * @param toFile   目标文件
+     */
+    public void fileCopyWithFileChannel(File fromFile, File toFile) {
+        FileInputStream fileInputStream = null;
+        FileOutputStream fileOutputStream = null;
+        FileChannel fileChannelInput = null;
+        FileChannel fileChannelOutput = null;
+        try {
+            fileInputStream = new FileInputStream(fromFile);
+            fileOutputStream = new FileOutputStream(toFile);
+            //得到fileInputStream的文件通道
+            fileChannelInput = fileInputStream.getChannel();
+            //得到fileOutputStream的文件通道
+            fileChannelOutput = fileOutputStream.getChannel();
+            //将fileChannelInput通道的数据，写入到fileChannelOutput通道
+            fileChannelInput.transferTo(0, fileChannelInput.size(), fileChannelOutput);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fileInputStream != null)
+                    fileInputStream.close();
+                if (fileChannelInput != null)
+                    fileChannelInput.close();
+                if (fileOutputStream != null)
+                    fileOutputStream.close();
+                if (fileChannelOutput != null)
+                    fileChannelOutput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+上面代码中，也是先分别创建了两个文件的输入输出流，然后在分别获取到两个文件的文件通道，然后将源文件的文件通道直接和目标文件的文件通道进行连接，直接将数据写入到目标文件中区。不需要进行分别的读取和写入操作了。
+
+运行代码之后，复制一个文件，对比两种复制方法，发现利用filechannel使用的时间比普通的读取输入时间缩短了将近一半。尤其是在进行大文件复制的时候，filechannel显得更加有优势。这里就不贴出图片了。见谅！
+
+总结
+
+这里我们了解了FileChannel类，知道了它所具有的特点和功能，那么我们就可以好好的使用它了。尤其是在我们复制文件的时候，可以更好的利用这个类，可以提高效率，也可以防止出现oom等其它情况。
+
+以上就是所有内容，如有任何问题，请及时与我联系。

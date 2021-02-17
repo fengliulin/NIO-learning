@@ -1,0 +1,19 @@
+对于文件的复制，平时我们都是使用输入输出流进行操作，利用源文件创建出一个输入流，然后利用目标文件创建出一个输出流，最后将输入流的数据读取写入到输出流中。这样也是可以进行操作的。但是利用fileChannel是很有用的一个方式。它能直接连接输入输出流的文件通道，将数据直接写入到目标文件中去。而且效率更高。
+
+FileChannel类
+
+FileChannel是一个用读写，映射和操作一个文件的通道。出了读写操作之外，还有裁剪特定大小文件truncate()，强制在内存中的数据刷新到硬盘中去force()，对通道上锁lock()等功能。
+
+他们的使用分别如下面代码：
+
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+            //读取1024字节内容到byteBuffer钟
+            fileChannelInput.read(byteBuffer);
+1
+2
+3
+4
+解释：上面代码首先创建一个1024大小的缓冲对象，然后在输入通道中读取1024大小数据，放入到缓冲对象中。
+
+            byteBuffer.clear();
+            byteBuffer.put("需要写入的数据
